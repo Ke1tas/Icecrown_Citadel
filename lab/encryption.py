@@ -12,6 +12,14 @@ def create_polybius_square(_key: str) -> str:
 
     return square_key
 
+def square_to_pos(square:str)->dict:
+    """
+    converts a Polybius square into a dictionary with a letter and a tuple of its coordinates
+    :param square: Polybius square
+    :return: dictionary with a letter and a tuple of its coordinates
+    """
+    return {char: (i // 6 + 1, i % 6 + 1) for i, char in enumerate(square)}
+
 def encode_message(_message: str, square: str) -> str:
     """
     a function for encoding text using Polybius square
@@ -20,10 +28,10 @@ def encode_message(_message: str, square: str) -> str:
     :return: encrypted text
     """
     _encoded_message = ''
-    char_to_pos = {char: (i // 6 + 1, i % 6 + 1) for i, char in enumerate(square)}
+    encoder = square_to_pos(square)
     for char in _message.upper():
-        if char in char_to_pos:
-            row, col = char_to_pos[char]
+        if char in encoder:
+            row, col = encoder[char]
             _encoded_message += f'{row}{col}'
         else:
             _encoded_message += char
