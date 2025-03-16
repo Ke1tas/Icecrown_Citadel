@@ -44,9 +44,12 @@ def read_file(path:str) -> str:
     :param path: file path
     :return: sting with text
     """
-    with open(path, 'r', encoding='utf-8') as key_file:
-        key = key_file.read()
-        return key
+    try:
+        with open(path, 'r', encoding='utf-8') as key_file:
+            key = key_file.read()
+            return key
+    except Exception as e:
+        print(e)
 
 def write_file(path:str, text:str) -> None:
     """
@@ -55,8 +58,11 @@ def write_file(path:str, text:str) -> None:
     :param text: written text
     :return: None
     """
-    with open(path, 'w', encoding='utf-8') as file:
-        file.write(text)
+    try:
+        with open(path, 'w', encoding='utf-8') as file:
+            file.write(text)
+    except Exception as e:
+        print(e)
 
 
 if __name__ == "__main__":
