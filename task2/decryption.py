@@ -66,7 +66,7 @@ def frequency_analysis(text: str) -> dict:
     return frequency
 
 
-def decrypt(text, key):
+def decrypt(text: str, key: dict) -> str:
     """
     decrypts text by key
     :param text: text to decrypt
