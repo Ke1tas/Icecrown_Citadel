@@ -57,10 +57,10 @@ def read_file(path: str) -> str:
         with open(path, 'r', encoding='utf-8') as key_file:
             return key_file.read()
     except FileNotFoundError:
-        print(f"Файл не найден: {path}")
+        print(f"File not found: {path}")
         raise
     except IOError as e:
-        print(f"Ошибка ввода-вывода: {e}")
+        print(f"Input/output error: {e}")
         raise
 
 
@@ -75,7 +75,7 @@ def write_file(path: str, text: str) -> None:
         with open(path, 'w', encoding='utf-8') as file:
             file.write(text)
     except IOError as e:
-        print(f"Ошибка записи в файл: {e}")
+        print(f"Error writing to file: {e}")
         raise
 
 
