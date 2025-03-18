@@ -1,5 +1,12 @@
 import collections
 
+from constants import (
+    ENCRYPTED_TEXT_TXT,
+    DECRYPTED_TEXT_TXT,
+    DECRYPTION_KEY_TXT,
+    TABLE_FREQUENCY_TXT
+)
+
 
 def read_file(path: str) -> str:
     """
@@ -9,10 +16,13 @@ def read_file(path: str) -> str:
     """
     try:
         with open(path, 'r', encoding='utf-8') as key_file:
-            key = key_file.read()
-            return key
-    except Exception as e:
-        print(e)
+            return key_file.read()
+    except FileNotFoundError:
+        print(f"Файл не найден: {path}")
+        raise
+    except IOError as e:
+        print(f"Ошибка ввода-вывода: {e}")
+        raise
 
 
 def write_file(path: str, text: str) -> None:
@@ -25,8 +35,9 @@ def write_file(path: str, text: str) -> None:
     try:
         with open(path, 'w', encoding='utf-8') as file:
             file.write(text)
-    except Exception as e:
-        print(e)
+    except IOError as e:
+        print(f"Ошибка записи в файл: {e}")
+        raise
 
 
 def read_dict(path: str) -> dict:
@@ -48,8 +59,12 @@ def read_dict(path: str) -> dict:
                         key[' '] = v.strip()
                     else:
                         key[k.strip()] = v.strip()
-    except Exception as e:
-        print(e)
+    except FileNotFoundError:
+        print(f"Файл не найден: {path}")
+        raise
+    except IOError as e:
+        print(f"Ошибка ввода-вывода: {e}")
+        raise
     return key
 
 
@@ -78,13 +93,19 @@ def decrypt(text: str, key: dict) -> str:
 
 
 if __name__ == "__main__":
-    frequency_table = read_dict('table_frequency.txt')
-    print(frequency_table)
-    encrypted_text = read_file('cod9.txt')
-    freq = frequency_analysis(encrypted_text)
-    sorted_freq = sorted(freq.items(), key=lambda x: x[1], reverse=True)
+    try:
+        frequency_table = read_dict(TABLE_FREQUENCY_TXT)
+        print(frequency_table)
 
-    key = read_dict('decryption_key.txt')
+        encrypted_text = read_file(ENCRYPTED_TEXT_TXT)
 
-    decrypted_text = decrypt(encrypted_text, key)
-    write_file('decrypted_text.txt', decrypted_text)
+        freq = frequency_analysis(encrypted_text)
+        sorted_freq = sorted(freq.items(), key=lambda x: x[1], reverse=True)
+        print(sorted_freq)
+
+        key = read_dict(DECRYPTION_KEY_TXT)
+
+        decrypted_text = decrypt(encrypted_text, key)
+        write_file(DECRYPTED_TEXT_TXT, decrypted_text)
+    except Exception as e:
+        print(f"Error: {e}")
