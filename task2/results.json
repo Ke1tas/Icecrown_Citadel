@@ -1,0 +1,30 @@
+{
+    "Java": {
+        "Frequency test": {
+            "p-value": 0.376759117811582,
+            "Status": "Passed"
+        },
+        "Test for identical consecutive bits": {
+            "p-value": 0.18867348602197487,
+            "Status": "Passed"
+        },
+        "Longest Sequence of 1s Test": {
+            "p-value": 0.7955083158292431,
+            "Status": "Passed"
+        }
+    },
+    "C++": {
+        "Frequency test": {
+            "p-value": 1.0,
+            "Status": "Passed"
+        },
+        "Test for identical consecutive bits": {
+            "p-value": 0.21592493894014042,
+            "Status": "Passed"
+        },
+        "Longest Sequence of 1s Test": {
+            "p-value": 0.31299605826618243,
+            "Status": "Passed"
+        }
+    }
+}
