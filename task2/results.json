@@ -1,7 +1,7 @@
 {
     "Java": {
         "Frequency test": {
-            "p-value": 0.376759117811582,
+            "p-value": 0.3767591178115822,
             "Status": "Passed"
         },
         "Test for identical consecutive bits": {

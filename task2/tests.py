@@ -27,34 +27,35 @@ def read_sequence(path: str) -> str:
         raise
 
 
-def frequency_test(sequence: str) -> float:
+def frequency_test(_sequence: str) -> float:
     """
     checks the generated sequence for randomness using frequency analysis
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: randomness coefficient of a sequence
     """
-    return erfc(abs(sum(1 if char == '1' else -1 for char in sequence)) / np.sqrt(2 * len(sequence)))
+    sn = sum(1 if char == '1' else -1 for char in _sequence) / np.sqrt(len(_sequence))
+    return erfc(sn/np.sqrt(2))
 
 
-def frequency_of_units(sequence: str) -> float:
+def frequency_of_units(_sequence: str) -> float:
     """
     counts the frequency of occurrence of ones in a string
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: frequency of occurrence of ones
     """
-    return sequence.count('1') / len(sequence)
+    return _sequence.count('1') / len(_sequence)
 
 
-def count_sign_changes(sequence: str) -> int:
+def count_sign_changes(_sequence: str) -> int:
     """
     counts the number of value changes in a sequence
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: number of value changes
     """
     count = 0
-    previous_char = sequence[0]
+    previous_char = _sequence[0]
 
-    for char in sequence[1:]:
+    for char in _sequence[1:]:
         if char != previous_char:
             count += 1
             previous_char = char
@@ -62,29 +63,29 @@ def count_sign_changes(sequence: str) -> int:
     return count
 
 
-def block_test(sequence: str) -> float:
+def block_test(_sequence: str) -> float:
     """
     test for identical consecutive bits
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: randomness coefficient of a sequence
     """
-    freq = frequency_of_units(sequence)
-    if abs(freq - 0.5) < 2 / np.sqrt(len(sequence)):
-        sign_changes = count_sign_changes(sequence)
-        return erfc(abs(sign_changes - 2 * len(sequence) * freq * (1 - freq)) /
-                    (2 * np.sqrt(2 * len(sequence)) * freq * (1 - freq)))
+    freq = frequency_of_units(_sequence)
+    if abs(freq - 0.5) < 2 / np.sqrt(len(_sequence)):
+        sign_changes = count_sign_changes(_sequence)
+        return erfc(abs(sign_changes - 2 * len(_sequence) * freq * (1 - freq)) /
+                    (2 * np.sqrt(2 * len(_sequence)) * freq * (1 - freq)))
     else:
         return 0
 
 
-def analyze_blocks(sequence: str) -> list:
+def analyze_blocks(_sequence: str) -> list:
     """
     counts the maximum number of consecutive units in blocks of a sequence
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: array with the number of occurrences of consecutive units of different lengths
     """
     block_size = 8
-    blocks = [sequence[i:i + block_size] for i in range(0, len(sequence), block_size)]
+    blocks = [_sequence[i:i + block_size] for i in range(0, len(_sequence), block_size)]
     counts = [0] * 4
 
     for block in blocks:
@@ -111,16 +112,17 @@ def analyze_blocks(sequence: str) -> list:
     return counts
 
 
-def longest_run_test(sequence: str) -> float:
+def longest_run_test(_sequence: str) -> float:
     """
     Longest Sequence of ones Test
-    :param sequence: sequence
+    :param _sequence: sequence
     :return: randomness coefficient of a sequence
     """
-    units_counts = analyze_blocks(sequence)
-    return gammainc(3 / 2,
-                    sum((units_counts[i] - 16 * PII[i]) ** 2 /
-                        (16 * PII[i]) for i in range(4)) / 2)
+    units_counts = analyze_blocks(_sequence)
+    xi_sqared = 0
+    for i in range(4):
+        xi_sqared += (units_counts[i] - 16 * PII[i]) ** 2 / (16 * PII[i])
+    return gammainc(1.5, xi_sqared / 2)
 
 
 def save_results_to_json(results: dict, filename: str) -> None:
@@ -134,46 +136,45 @@ def save_results_to_json(results: dict, filename: str) -> None:
         json.dump(results, json_file, indent=4)
 
 
-def test_status(p_value: float) -> str:
+def test_status(p: float) -> str:
     """
     Determines the status of a test based on its p-value
 
-    :param p_value: p-value of the test
+    :param p: p-value of the test
+
     :return: Test status line
     """
-    return "Passed" if p_value > 0.01 else "Not passed"
+    return "Passed" if p > 0.01 else "Not passed"
 
 
 if __name__ == "__main__":
-    results = {}
+    res = {}
 
     binary_sequence_java = read_sequence(BINARY_SEQUENCE_JAVA_TXT)
     binary_sequence_cpp = read_sequence(BINARY_SEQUENCE_CPP_TXT)
 
     for lang, sequence in zip(["Java", "C++"], [binary_sequence_java, binary_sequence_cpp]):
-        results[lang] = {}
-
+        res[lang] = {}
         p_value = frequency_test(sequence)
-        results[lang]['Frequency test'] = {
+        res[lang]['Frequency test'] = {
             'p-value': p_value,
             'Status': test_status(p_value)
         }
-        print(f'Frequency test {lang}: p-value = {p_value}, Статус = {results[lang]["Frequency test"]["Status"]}')
+        print(f'Frequency test {lang}: p-value = {p_value}, Статус = {res[lang]["Frequency test"]["Status"]}')
 
         p_value = block_test(sequence)
-        results[lang]['Test for identical consecutive bits'] = {
+        res[lang]['Test for identical consecutive bits'] = {
             'p-value': p_value,
             'Status': test_status(p_value)
         }
         print(
-            f'Test for identical consecutive bits {lang}: p-value = {p_value}, Статус = {results[lang]["Test for identical consecutive bits"]["Status"]}')
+            f'Test for identical consecutive bits {lang}: p-value = {p_value}, Статус = {res[lang]["Test for identical consecutive bits"]["Status"]}')
 
         p_value = longest_run_test(sequence)
-        results[lang]['Longest Sequence of 1s Test'] = {
+        res[lang]['Longest Sequence of 1s Test'] = {
             'p-value': p_value,
             'Status': test_status(p_value)
         }
         print(
-            f'Longest Sequence of 1s Test{lang}: p-value = {p_value}, Статус = {results[lang]["Longest Sequence of 1s Test"]["Status"]}')
-
-    save_results_to_json(results, 'results.json')
+            f'Longest Sequence of 1s Test{lang}: p-value = {p_value}, Статус = {res[lang]["Longest Sequence of 1s Test"]["Status"]}')
+    save_results_to_json(res, 'results.json')
