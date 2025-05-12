@@ -33,7 +33,7 @@ def frequency_test(_sequence: str) -> float:
     :param _sequence: sequence
     :return: randomness coefficient of a sequence
     """
-    sn = sum(1 if char == '1' else -1 for char in _sequence) / np.sqrt(len(_sequence))
+    sn = abs(sum(1 if char == '1' else -1 for char in _sequence) / np.sqrt(len(_sequence)))
     return erfc(sn/np.sqrt(2))
 
 
