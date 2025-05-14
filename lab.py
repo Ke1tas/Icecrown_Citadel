@@ -9,11 +9,11 @@ from cryptography.hazmat.primitives import padding as sym_padding
 
 
 class AsymmetricEncryption:
-    """Класс для работы с асимметричным шифрованием (RSA)"""
+    """Class for working with asymmetric encryption (RSA)"""
 
     @staticmethod
     def generate_keys() -> tuple[RSAPrivateKey, rsa.RSAPublicKey]:
-        """Генерация пары ключей RSA"""
+        """Generate RSA key pair"""
         try:
             private_key = rsa.generate_private_key(
                 public_exponent=65537,
@@ -29,7 +29,7 @@ class AsymmetricEncryption:
     @staticmethod
     def serialize_keys(public_key: rsa.RSAPublicKey, public_key_path: str,
                        private_key: RSAPrivateKey, private_key_path: str) -> None:
-        """Сериализация ключей в файлы"""
+        """Serializing keys to files"""
         try:
             with open(public_key_path, 'wb') as f:
                 f.write(public_key.public_bytes(
@@ -51,7 +51,7 @@ class AsymmetricEncryption:
     @staticmethod
     def encrypt_symmetric_key(symmetric_key: bytes, public_key: rsa.RSAPublicKey,
                               encrypted_key_path: str) -> None:
-        """Шифрование симметричного ключа RSA"""
+        """RSA Symmetric Key Encryption"""
         try:
             with open(encrypted_key_path, 'wb') as f:
                 f.write(public_key.encrypt(
@@ -68,7 +68,7 @@ class AsymmetricEncryption:
 
     @staticmethod
     def load_private_key(private_key_path: str) -> RSAPrivateKey:
-        """Загрузка закрытого ключа из файла"""
+        """Loading private key from file"""
         try:
             with open(private_key_path, 'rb') as f:
                 private_key = serialization.load_pem_private_key(
@@ -83,7 +83,7 @@ class AsymmetricEncryption:
     @staticmethod
     def decrypt_symmetric_key(encrypted_symmetric_key: bytes,
                               private_key: RSAPrivateKey) -> bytes:
-        """Дешифрование симметричного ключа"""
+        """Decrypting a symmetric key"""
         try:
             symmetric_key = private_key.decrypt(
                 encrypted_symmetric_key,
@@ -100,11 +100,11 @@ class AsymmetricEncryption:
 
 
 class SymmetricEncryption:
-    """Класс для работы с симметричным шифрованием (IDEA)"""
+    """Class for working with symmetric encryption (IDEA)"""
 
     @staticmethod
     def generate_key() -> bytes:
-        """Генерация симметричного ключа"""
+        """Generating a symmetric key"""
         try:
             symmetric_key = secrets.token_bytes(16)
             print("Сгенерирован симметричный ключ IDEA (128 бит)")
@@ -114,7 +114,7 @@ class SymmetricEncryption:
 
     @staticmethod
     def add_padding(plaintext: bytes) -> bytes:
-        """Добавление padding к данным"""
+        """Adding padding to data"""
         try:
             padder = sym_padding.PKCS7(64).padder()
             padded_data = padder.update(plaintext) + padder.finalize()
@@ -124,7 +124,7 @@ class SymmetricEncryption:
 
     @staticmethod
     def remove_padding(padded_data: bytes) -> bytes:
-        """Удаление padding из данных"""
+        """Removing padding from data"""
         try:
             unpadder = sym_padding.PKCS7(64).unpadder()
             data = unpadder.update(padded_data) + unpadder.finalize()
@@ -134,7 +134,7 @@ class SymmetricEncryption:
 
     @staticmethod
     def encrypt(padded_data: bytes, symmetric_key: bytes, iv: bytes) -> bytes:
-        """Шифрование данных IDEA"""
+        """IDEA Data Encryption"""
         try:
             cipher = Cipher(
                 algorithms.IDEA(symmetric_key),
@@ -149,7 +149,7 @@ class SymmetricEncryption:
 
     @staticmethod
     def decrypt(encrypted_data: bytes, symmetric_key: bytes) -> bytes:
-        """Дешифрование данных IDEA"""
+        """IDEA Data Decryption"""
         try:
             iv = encrypted_data[:8]
             ciphertext = encrypted_data[8:]
@@ -166,11 +166,11 @@ class SymmetricEncryption:
 
 
 class FileHandler:
-    """Класс для работы с файлами"""
+    """Class for working with files"""
 
     @staticmethod
     def read_file(file_path: str) -> bytes:
-        """Чтение файла"""
+        """Reading a file"""
         try:
             with open(file_path, 'rb') as f:
                 return f.read()
@@ -179,7 +179,7 @@ class FileHandler:
 
     @staticmethod
     def write_file(data: bytes, file_path: str) -> None:
-        """Запись в файл"""
+        """Write to file"""
         try:
             with open(file_path, 'wb') as f:
                 f.write(data)
@@ -188,12 +188,12 @@ class FileHandler:
 
 
 class HybridEncryptionSystem:
-    """Главный класс для управления гибридным шифрованием"""
+    """Main class for managing hybrid encryption"""
 
     @staticmethod
     def generate_keys(encrypted_key_path: str, public_key_path: str,
                       private_key_path: str) -> None:
-        """Генерация всех ключей"""
+        """Generate all keys"""
         print("Генерация ключей...")
         try:
             symmetric_key = SymmetricEncryption.generate_key()
@@ -214,7 +214,7 @@ class HybridEncryptionSystem:
     @staticmethod
     def encrypt_file(input_file_path: str, private_key_path: str,
                      encrypted_key_path: str, output_file_path: str) -> None:
-        """Шифрование файла"""
+        """File encryption"""
         print(f"Шифрование файла {input_file_path}...")
         try:
             private_key = AsymmetricEncryption.load_private_key(private_key_path)
@@ -236,7 +236,7 @@ class HybridEncryptionSystem:
     @staticmethod
     def decrypt_file(input_file_path: str, private_key_path: str,
                      encrypted_key_path: str, output_file_path: str) -> None:
-        """Дешифрование файла"""
+        """File decryption"""
         print(f"Дешифрование файла {input_file_path}...")
         try:
             private_key = AsymmetricEncryption.load_private_key(private_key_path)
