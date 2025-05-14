@@ -1,21 +1,20 @@
 import argparse
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding as sym_padding
 import secrets
 
-#РАЗБИТЬ НА ОТДЕЛЬНЫЕ ФУНКЦИИ, А ТО ЧЕТ КОММЕНТОВ МНОГО
-def generate_keys(encrypted_key_path, public_key_path, private_key_path):
-    """Генерация ключей для гибридной системы"""
-    print("Генерация ключей...")
 
-    # 1.1. Генерация симметричного ключа для IDEA (128 бит)
-    symmetric_key = secrets.token_bytes(16)  # 128 бит для IDEA
+def symm_key_gen() -> bytes:
+    symmetric_key = secrets.token_bytes(16)
     print("Сгенерирован симметричный ключ IDEA (128 бит)")
+    return symmetric_key
 
-    # 1.2. Генерация асимметричных ключей RSA
+
+def asymm_keys_gen() -> tuple:
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
@@ -23,8 +22,10 @@ def generate_keys(encrypted_key_path, public_key_path, private_key_path):
     )
     public_key = private_key.public_key()
     print("Сгенерирована пара ключей RSA (2048 бит)")
+    return private_key, public_key
 
-    # 1.3. Сериализация ассиметричных ключей.
+
+def asymm_key_serialize(public_key, public_key_path, private_key, private_key_path) -> None:
     with open(public_key_path, 'wb') as f:
         f.write(public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
@@ -40,9 +41,8 @@ def generate_keys(encrypted_key_path, public_key_path, private_key_path):
         ))
     print(f"Закрытый ключ сохранен в {private_key_path}")
 
-    print("Генерация ключей завершена успешно!")
 
-    # 1.4. Шифрование ключа симметричного шифрования открытым ключом и сохранение по указанному пути.
+def symm_key_encryption(symmetric_key, public_key, encrypted_key_path) -> None:
     with open(encrypted_key_path, 'wb') as f:
         f.write(public_key.encrypt(
             symmetric_key,
@@ -55,21 +55,28 @@ def generate_keys(encrypted_key_path, public_key_path, private_key_path):
     print(f"Зашифрованный симметричный ключ сохранен в {encrypted_key_path}")
 
 
-def encrypt_file(input_file_path, private_key_path, encrypted_key_path, output_file_path):
-    """Шифрование файла гибридной системой"""
-    print(f"Шифрование файла {input_file_path}...")
-
+def private_key_load(private_key_path) -> RSAPrivateKey:
     with open(private_key_path, 'rb') as f:
         private_key = serialization.load_pem_private_key(
             f.read(),
             password=None,
             backend=default_backend()
         )
+    return private_key
 
-    with open(encrypted_key_path, 'rb') as f:
-        encrypted_symmetric_key = f.read()
 
-    # 2.1. Расшифровка симметричного ключа закрытым ключом RSA
+def read_file(file_path):
+    with open(file_path, 'rb') as f:
+        file = f.read()
+    return file
+
+
+def write_file(text, file_path):
+    with open(file_path, 'wb') as f:
+        f.write(text)
+
+
+def symm_key_decrypt(encrypted_symmetric_key, private_key):
     symmetric_key = private_key.decrypt(
         encrypted_symmetric_key,
         padding.OAEP(
@@ -79,19 +86,22 @@ def encrypt_file(input_file_path, private_key_path, encrypted_key_path, output_f
         )
     )
     print("Симметричный ключ успешно расшифрован")
+    return symmetric_key
 
-    # 2.2. Шифрование файла симметричным алгоритмом IDEA
-    with open(input_file_path, 'rb') as f:
-        plaintext = f.read()
 
-    # Добавление padding для IDEA
+def add_padding(plaintext):
     padder = sym_padding.PKCS7(64).padder()
     padded_data = padder.update(plaintext) + padder.finalize()
+    return padded_data
 
-    # Генерация IV для режима CBC
-    iv = secrets.token_bytes(8)  # 64 бит для IDEA
 
-    # Шифрование
+def delete_padding(decrypted_padded_data):
+    unpadder = sym_padding.PKCS7(64).unpadder()
+    decrypted_data = unpadder.update(decrypted_padded_data) + unpadder.finalize()
+    return decrypted_data
+
+
+def encrypt_text(padded_data, symmetric_key, iv):
     cipher = Cipher(
         algorithms.IDEA(symmetric_key),
         modes.CBC(iv),
@@ -99,48 +109,12 @@ def encrypt_file(input_file_path, private_key_path, encrypted_key_path, output_f
     )
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(padded_data) + encryptor.finalize()
-
-    # Сохранение зашифрованного файла (IV + ciphertext)
-    with open(output_file_path, 'wb') as f:
-        f.write(iv + ciphertext)
-
-    print(f"Файл успешно зашифрован и сохранен в {output_file_path}")
+    return ciphertext
 
 
-def decrypt_file(input_file_path, private_key_path, encrypted_key_path, output_file_path):
-    """Дешифрование файла гибридной системой"""
-    print(f"Дешифрование файла {input_file_path}...")
-
-    with open(private_key_path, 'rb') as f:
-        private_key = serialization.load_pem_private_key(
-            f.read(),
-            password=None,
-            backend=default_backend()
-        )
-
-    with open(encrypted_key_path, 'rb') as f:
-        encrypted_symmetric_key = f.read()
-
-    # 3.1. Расшифровка симметричного ключа закрытым ключом RSA
-    symmetric_key = private_key.decrypt(
-        encrypted_symmetric_key,
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-    print("Симметричный ключ успешно расшифрован")
-
-    # 3.2. Дешифрование файла симметричным алгоритмом IDEA
-    # Чтение зашифрованного файла (IV + ciphertext)
-    with open(input_file_path, 'rb') as f:
-        data = f.read()
-
-    iv = data[:8]
-    ciphertext = data[8:]
-
-    # Дешифрование
+def dencrypt_text(encrypted_text, symmetric_key):
+    iv = encrypted_text[:8]
+    ciphertext = encrypted_text[8:]
     cipher = Cipher(
         algorithms.IDEA(symmetric_key),
         modes.CBC(iv),
@@ -148,13 +122,56 @@ def decrypt_file(input_file_path, private_key_path, encrypted_key_path, output_f
     )
     decryptor = cipher.decryptor()
     decrypted_padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+    return decrypted_padded_data
 
-    # Удаление padding
-    unpadder = sym_padding.PKCS7(64).unpadder()
-    decrypted_data = unpadder.update(decrypted_padded_data) + unpadder.finalize()
 
-    with open(output_file_path, 'wb') as f:
-        f.write(decrypted_data)
+def generate_keys(encrypted_key_path, public_key_path, private_key_path) -> None:
+    print("Генерация ключей...")
+    symmetric_key = symm_key_gen()
+    private_key, public_key = asymm_keys_gen()
+
+    asymm_key_serialize(public_key, public_key_path, private_key, private_key_path)
+    print("Генерация ключей завершена успешно!")
+
+    symm_key_encryption(symmetric_key, public_key, encrypted_key_path)
+
+
+def encrypt_file(input_file_path, private_key_path, encrypted_key_path, output_file_path):
+    """Шифрование файла гибридной системой"""
+    print(f"Шифрование файла {input_file_path}...")
+    private_key = private_key_load(private_key_path)
+    encrypted_symmetric_key = read_file(encrypted_key_path)
+
+    symmetric_key = symm_key_decrypt(encrypted_symmetric_key, private_key)
+
+    plaintext = read_file(input_file_path)
+
+    padded_data = add_padding(plaintext)
+
+    iv = secrets.token_bytes(8)
+
+    ciphertext = encrypt_text(padded_data, symmetric_key, iv)
+
+    write_file(iv + ciphertext, output_file_path)
+    print(f"Файл успешно зашифрован и сохранен в {output_file_path}")
+
+
+def decrypt_file(input_file_path, private_key_path, encrypted_key_path, output_file_path):
+    """Дешифрование файла гибридной системой"""
+    print(f"Дешифрование файла {input_file_path}...")
+
+    private_key = private_key_load(private_key_path)
+    encrypted_symmetric_key = read_file(encrypted_key_path)
+
+    symmetric_key = symm_key_decrypt(encrypted_symmetric_key, private_key)
+
+    encrypted_text = read_file(input_file_path)
+
+    decrypted_padded_data = dencrypt_text(encrypted_text, symmetric_key)
+
+    decrypted_data = delete_padding(decrypted_padded_data)
+
+    write_file(decrypted_data, output_file_path)
 
     print(f"Файл успешно расшифрован и сохранен в {output_file_path}")
 
