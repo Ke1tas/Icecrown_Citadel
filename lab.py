@@ -4,6 +4,7 @@ import json
 import multiprocessing
 import time
 from typing import Optional
+
 import matplotlib.pyplot as plt
 
 
@@ -116,11 +117,9 @@ class CardFinder:
             plt.grid(True)
             plt.legend()
 
-            # Save plot
             plt.savefig(plot_filename)
             print(f"Performance plot saved as {plot_filename}")
 
-            # Optionally show plot
             plt.show()
         except Exception as e:
             print(f"Error in measure_performance: {e}")
@@ -139,21 +138,17 @@ def parse_args():
     parser.add_argument('--last-four', required=True,
                         help="Last 4 digits of the card number to find")
 
-    # Subcommands
     subparsers = parser.add_subparsers(dest='mode', required=True,
                                        help='Available modes')
 
-    # Find mode
     find_parser = subparsers.add_parser('find', help='Find card by hash')
     find_parser.add_argument('-p', '--processes', type=int,
                              default=multiprocessing.cpu_count(),
                              help=f'Number of processes (default: CPU count)')
 
-    # Validate mode
     validate_parser = subparsers.add_parser('validate', help='Validate card with Luhn algorithm')
     validate_parser.add_argument('card_number', help='Card number to validate')
 
-    # Performance mode
     perf_parser = subparsers.add_parser('performance', help='Measure performance')
     perf_parser.add_argument('--plot', default="performance_plot.png",
                              help='Filename to save performance plot')
